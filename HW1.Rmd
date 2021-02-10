@@ -1,0 +1,97 @@
+---
+title: "HW1-3.11"
+author: "Haoran Su"
+date: "2/9/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+## Explanation of the example showing how the authors reached their conclusion that the critical value should be between 69 and 73 people cured
+
+The ordinary aspirin was found effective against headache 60%. Now a drug company has a new aspirin and claims it to be more effective. We take a test for that. The null hypothesis is that p=0.6, the alternate hypothesis is that p>0.6.
+p is the probability that the new drug is effective.
+m is the least number of cured people when we reject the null hypothesis. So we want to have type 1 and type 2 error as small as possible.
+
+The function $alpha$ is the probability that we reject the null hypothesis, that is under the circumstances that the null hypothesis is true.
+$$\alpha(p)=\sum_{m<k<n}b(n,p,k)$$
+
+p in this case is 0.6, we count the values of $\alpha(0.6)$ for different m values(m>60).
+
+```{r}
+a<-rep(0,100)
+b<-rep(0,100)
+p<-rep(0,100)
+m1<-rep(0,100)
+
+n=100
+for (i in 0:40){
+  m1[i]=60+i
+  a[i]=pbinom(n,n,0.6)-pbinom(m1[i]-1,n,0.6)
+}
+y1=data.frame(cbind(m1,a))
+head(y1)
+```
+$\alpha(0.6)$ is the probability of a type 1 error. We want to choose m to make $\alpha(0.6)$ small. 
+The list above shows that as m increase, $\alpha(0.6)$ becomes smaller. So we take out the smallest m that makes $\alpha(0.6)$ smaller than 0.05, which is 69.
+```{r}
+ma<-y1[which(y1$a<0.05),1]
+ma[1]
+```
+$\beta(p)$is the probability of a type 2 error, is to accept the null hypothesis  when it is wrong.
+
+$$\beta(p)=1-\alpha(p)= 1- \sum_{m<k<n}b(n,p,k)$$
+
+Now suppose that the additive is effective then p is grater than 0.6, which is 0.8. We want to choose m to make $\beta(0.8)$=1-$\alpha(0.8)$ small. 
+
+The list below shows that as m increase, $\beta(0.8)$ becomes larger. So we take out the maximum m that makes $\beta(0.8)$ smaller than 0.05, which is 73.
+
+```{r}
+n=100
+m2<-rep(0,100)
+for (i in 1:20){
+  m2[i]=80-i
+  b[i]=1-(pbinom(n,n,0.8)-pbinom(m2[i]-1,n,0.8))
+}
+y2=data.frame(cbind(m2,b))
+head(y2)
+```
+
+```{r}
+mb<-y2[which(y2$b<0.05),1]
+mb[1]
+```
+
+Conclusion:
+So we choose m between 69 and 73 to make the sum of probabilities of type 1 error and type 2 error small. If we want to make type1 error smaller, m could be set close to 73. If we want to make type2 error smaller, m could be set close to 69.
+
+## Power Curve
+Here we will replicate and explain how the power curve of the Figure 3.7 is produced.
+Two lines are drawn with m=69, 73.
+
+```{r}
+n=100
+a1<-rep(0,100)
+a2<-rep(0,100)
+p<-seq(from=0.4,to=1,length=n)
+for (i in 0:100){
+a1[i]=pbinom(n,n,p[i])-pbinom(69-1,n,p[i])
+}
+for (i in 0:100){
+a2[i]=pbinom(n,n,p[i])-pbinom(73-1,n,p[i])
+}
+data.all=data.frame(cbind(p,a1,a2))
+
+plot<-ggplot(data=data.all,mapping=aes(x=p))+ geom_line(mapping=aes(y=a1))+ geom_line(mapping=aes(y=a2))+ labs(x="p",y="a(p)",caption="Figure 3.7: The power curve.")
+
+plot+
+  annotate("segment", x = 0.6, xend = 0.8, y = 0.05, yend = 0.05)+
+  annotate("segment", x = 0.6, xend = 0.8, y = 0.95, yend = 0.95)+
+  annotate("segment", x = 0.6, xend = 0.6, y = 0.05, yend = 0.95)+
+  annotate("segment", x = 0.8, xend = 0.8, y = 0.05, yend = 0.95)
+```
+
+## Thankfulness
+Thanks to my friend Runqi Zhao that she gives me the idea of how the plot is made. Also I feel an immense gratitude to Xijia Luo for how m is chosen. 
